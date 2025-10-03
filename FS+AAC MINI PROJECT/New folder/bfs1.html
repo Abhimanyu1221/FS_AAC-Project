@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>BFS Visualization</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      display: flex;
+      height: 100vh;
+    }
+
+    /* Top Navbar */
+    .topnav {
+      width: 100%;
+      position: fixed;
+      top: 0;
+      left: 0;
+      background: #333;
+      color: white;
+      display: flex;
+      justify-content: center;
+      padding: 10px 0;
+      z-index: 1000;
+    }
+
+    .topnav a {
+      color: white;
+      padding: 14px 20px;
+      text-decoration: none;
+    }
+
+    .topnav a:hover {
+      background: #575757;
+    }
+
+    /* Right Vertical Navbar */
+    .sidenav {
+      height: 100%;
+      width: 200px;
+      position: fixed;
+      right: 0;
+      top: 50px;
+      background-color: #f1f1f1;
+      padding-top: 20px;
+      border-left: 2px solid #ccc;
+    }
+
+    .sidenav a {
+      display: block;
+      padding: 12px;
+      color: black;
+      text-decoration: none;
+      margin: 5px 0;
+    }
+
+    .sidenav a:hover {
+      background-color: #ddd;
+    }
+
+    /* Main Content */
+    .content {
+      margin-top: 60px;
+      margin-right: 220px;
+      padding: 20px;
+      flex-grow: 1;
+    }
+
+    .section {
+      display: none;
+    }
+
+    .active {
+      display: block;
+    }
+
+    /* Visualization */
+    .node {
+      display: inline-block;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: lightblue;
+      text-align: center;
+      line-height: 40px;
+      margin: 10px;
+      border: 2px solid #333;
+    }
+
+    .highlight {
+      background: orange !important;
+      color: white;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <!-- Top Navbar -->
+  <div class="topnav">
+    <a href="index.html">Home</a>
+    <a href="bfs.html">BFS</a>
+    <a href="dfs.html">DFS</a>
+  </div>
+
+  <!-- Right Side Navbar -->
+  <div class="sidenav">
+    <a href="#" onclick="showSection('about')">What is BFS?</a>
+    <a href="#" onclick="showSection('visual')">Visualize It</a>
+    <a href="#" onclick="showSection('apps')">Applications</a>
+  </div>
+
+  <!-- Main Content -->
+  <div class="content">
+    <!-- About BFS -->
+    <div id="about" class="section active">
+      <h2>What is BFS?</h2>
+      <p>
+        Breadth-First Search (BFS) is a graph traversal algorithm that explores 
+        all neighbors of a node before moving on to the next level. 
+        It uses a queue data structure.
+      </p>
+    </div>
+
+    <!-- BFS Visualization -->
+    <div id="visual" class="section">
+      <h2>BFS Visualization</h2>
+      <button onclick="runBFS()">Start BFS</button>
+      <div id="graph"></div>
+    </div>
+
+    <!-- Applications -->
+    <div id="apps" class="section">
+      <h2>Applications of BFS</h2>
+      <ul>
+        <li>Shortest path in unweighted graphs</li>
+        <li>Web crawlers</li>
+        <li>Social networking sites (finding friends of friends)</li>
+      </ul>
+      <img src="https://miro.medium.com/v2/resize:fit:720/format:webp/1*iQcn8_YjNXiELaWDXwLmLg.png" 
+           alt="BFS Application Example" width="400">
+    </div>
+  </div>
+
+  <script>
+    // Switch sections
+    function showSection(id) {
+      document.querySelectorAll(".section").forEach(sec => sec.classList.remove("active"));
+      document.getElementById(id).classList.add("active");
+    }
+
+    // Visualization of BFS with 10 nodes
+    function runBFS() {
+      const graphDiv = document.getElementById("graph");
+      graphDiv.innerHTML = "";
+
+      // Graph structure
+      const graph = {
+        1: [2, 3],
+        2: [4, 5],
+        3: [6, 7],
+        4: [8],
+        5: [9],
+        6: [10],
+        7: [],
+        8: [],
+        9: [],
+        10: []
+      };
+
+      // Create nodes visually
+      let nodes = {};
+      for (let i = 1; i <= 10; i++) {
+        let node = document.createElement("div");
+        node.className = "node";
+        node.id = "node" + i;
+        node.innerText = i;
+        graphDiv.appendChild(node);
+        nodes[i] = node;
+      }
+
+      // BFS Traversal
+      let visited = new Set();
+      let queue = [1];
+      let i = 0;
+
+      function step() {
+        if (i < queue.length) {
+          let current = queue[i];
+          if (!visited.has(current)) {
+            visited.add(current);
+            nodes[current].classList.add("highlight");
+            graph[current].forEach(neigh => {
+              if (!visited.has(neigh)) queue.push(neigh);
+            });
+          }
+          i++;
+          setTimeout(step, 1000);
+        }
+      }
+      step();
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,354 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>DFS — Stepwise Visualizer</title>
+  <style>
+    :root{
+      --topnav-height:56px;
+      --sidenav-width:220px;
+      --bg:#f6f7fb;
+      --accent:#ff8c00;
+      --visited:#b7e4c7;
+      --stacked:#9ec5fe;
+      --skipped:#e0e0e0;
+      --node-size:44px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial;
+      background:var(--bg);
+      color:#111;
+      height:100vh;
+    }
+    .topnav{
+      position:fixed;left:0;right:0;top:0;height:var(--topnav-height);
+      background:#222;color:#fff;display:flex;align-items:center;gap:12px;padding:0 18px;z-index:1200
+    }
+    .topnav a{color:#fff;text-decoration:none;padding:10px 12px;border-radius:6px}
+    .topnav a:hover{background:#2f2f2f}
+    .sidenav{
+      position:fixed;right:0;top:var(--topnav-height);bottom:0;width:var(--sidenav-width);
+      background:#fff;border-left:1px solid #e3e6ef;padding:18px;overflow:auto;z-index:1100
+    }
+    .sidenav h4{margin:6px 0 10px}
+    .sidenav .navlink{display:block;padding:10px;border-radius:6px;color:#222;text-decoration:none;margin-bottom:6px}
+    .sidenav .navlink:hover{background:#f1f6ff}
+    .main{
+      margin-top:var(--topnav-height);
+      margin-right:calc(var(--sidenav-width) + 20px);
+      padding:18px;min-height:calc(100vh - var(--topnav-height));
+    }
+    .layout{display:grid;grid-template-columns:320px 1fr;gap:18px;align-items:start;}
+    .panel{background:#fff;border-radius:10px;padding:14px;box-shadow:0 6px 18px rgba(20,24,50,0.06)}
+    .panel h3{margin:4px 0 10px}
+    .pseudocode{font-family:monospace;background:#0f1724;color:#e6eef8;padding:10px;border-radius:8px}
+    .pseudocode .line{padding:6px 8px;border-radius:6px}
+    .pseudocode .highlight{background:#18304a}
+    .state-box{display:flex;flex-direction:column;gap:8px}
+    .state-box .box{background:#fbfdff;border:1px solid #e9eefb;padding:8px;border-radius:8px}
+    .queue-list{display:flex;gap:8px;flex-wrap:wrap}
+    .queue-item{padding:6px 10px;border-radius:8px;background:#fff;border:1px solid #d9e7ff;min-width:36px;text-align:center}
+    .graph-area{background:linear-gradient(180deg,#ffffff,#fbfdff);height:620px;border-radius:10px;padding:12px;position:relative;overflow:hidden}
+    .svg-layer{position:absolute;left:0;right:0;top:0;bottom:0}
+    .node{
+      position:absolute;width:var(--node-size);height:var(--node-size);border-radius:50%;display:flex;align-items:center;justify-content:center;
+      background:#fff;border:2px solid #2b2b2b;font-weight:600;transform:translate(-50%,-50%);box-shadow:0 4px 10px rgba(15,20,40,0.06);
+    }
+    .node.visited{background:var(--visited);border-color:#2d6a4f}
+    .node.current{background:var(--accent);color:#fff;border-color:var(--accent)}
+    .node.stacked{background:var(--stacked);border-color:#2b66d6}
+    .node.skipped{background:var(--skipped);border-color:#9e9e9e}
+    .legend{display:flex;gap:8px;align-items:center;margin-top:8px}
+    .legend .item{display:flex;gap:6px;align-items:center}
+    .legend .sw{width:18px;height:18px;border-radius:4px;border:1px solid #ccc}
+    .small{font-size:13px;color:#555}
+    .controls{display:flex;gap:8px;align-items:center;margin-top:8px}
+    .btn{background:#0f1724;color:#fff;padding:8px 12px;border-radius:8px;border:none;cursor:pointer}
+    .btn.secondary{background:#fff;color:#0f1724;border:1px solid #d6dae6}
+    .btn:disabled{opacity:0.5;cursor:not-allowed}
+    .adj-list{display:flex;gap:8px;flex-wrap:wrap}
+    .adj-item{padding:8px;border-radius:8px;background:#fff;border:1px solid #e6eefb}
+    @media (max-width:1000px){
+      .layout{grid-template-columns:1fr}
+      .main{margin-right:0}
+      .sidenav{position:static;width:100%;height:auto;border-left:none;border-top:1px solid #eee}
+    }
+  </style>
+</head>
+<body>
+  <div class="topnav">
+    <a href="index.html">Home</a>
+    <a href="bfs.html">BFS</a>
+    <a href="dfs.html">DFS</a>
+    <div style="flex:1"></div>
+    <div class="small">DFS Stepwise Visualizer</div>
+  </div>
+
+  <div class="sidenav">
+    <h4>Sections</h4>
+    <a class="navlink" href="#" onclick="showSection('about')">What is DFS?</a>
+    <a class="navlink" href="#" onclick="showSection('visual')">Visualize It</a>
+    <a class="navlink" href="#" onclick="showSection('apps')">Applications</a>
+    <hr style="margin:12px 0">
+    <div class="small">Tips</div>
+    <div class="small" style="margin-top:8px">Use the play / next buttons to step through the algorithm. The panels show the stack, visited set and adjacency details for the current step.</div>
+  </div>
+
+  <main class="main">
+    <div id="about" class="section">
+      <h2>What is DFS?</h2>
+      <p>Depth-first search (DFS) is a graph traversal algorithm that explores as far as possible along each branch before backtracking. It uses a <strong>stack</strong> (explicit or implicit via recursion). This visualizer shows the graph and the stack/visited data-structures step-by-step so the user can see which elements are pushed, popped, and visited.</p>
+    </div>
+
+    <div id="visual" class="section" style="display:none">
+      <div class="layout">
+        <div>
+          <div class="panel">
+            <h3>Controls</h3>
+            <div class="controls">
+              <button id="prevBtn" class="btn secondary" onclick="prevStep()">◀ Prev</button>
+              <button id="playBtn" class="btn" onclick="play()">▶ Play</button>
+              <button id="pauseBtn" class="btn secondary" onclick="pause()" disabled>❚❚ Pause</button>
+              <button id="nextBtn" class="btn secondary" onclick="nextStep()">Next ▶</button>
+              <button id="resetBtn" class="btn secondary" onclick="resetAll()">↺ Reset</button>
+            </div>
+
+            <div style="margin-top:10px">
+              <label class="small">Speed (ms per step)</label>
+              <input id="speedRange" type="range" min="200" max="2000" step="100" value="900" oninput="speedLabel.innerText=this.value+'ms'">
+              <div id="speedLabel" class="small">900ms</div>
+            </div>
+
+            <hr style="margin:12px 0">
+
+            <div class="pseudocode">
+              <div id="line1" class="line">1. push(start) onto stack</div>
+              <div id="line2" class="line">2. while (stack not empty) do</div>
+              <div id="line3" class="line">3. &nbsp;&nbsp; node = pop()</div>
+              <div id="line4" class="line">4. &nbsp;&nbsp; if (not visited(node)) then</div>
+              <div id="line5" class="line">5. &nbsp;&nbsp;&nbsp;&nbsp; mark visited(node)</div>
+              <div id="line6" class="line">6. &nbsp;&nbsp;&nbsp;&nbsp; for neighbor in adj[node] (reverse order)</div>
+              <div id="line7" class="line">7. &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; if (not visited(neighbor))</div>
+              <div id="line8" class="line">8. &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; push(neighbor)</div>
+            </div>
+
+          </div>
+
+          <div class="panel" style="margin-top:12px">
+            <h3>Stack</h3>
+            <div class="box small state-box">
+              <div class="small">Top -> Bottom</div>
+              <div id="stackDisplay" class="queue-list"></div>
+            </div>
+
+            <h3 style="margin-top:10px">Visited</h3>
+            <div id="visitedDisplay" class="box small">[]</div>
+
+            <h3 style="margin-top:10px">Adjacency (current)</h3>
+            <div id="adjDisplay" class="adj-list"></div>
+
+            <div style="margin-top:10px" class="legend">
+              <div class="item"><span class="sw" style="background:var(--accent)"></span><span class="small">current</span></div>
+              <div class="item"><span class="sw" style="background:var(--visited)"></span><span class="small">visited</span></div>
+              <div class="item"><span class="sw" style="background:var(--stacked)"></span><span class="small">in stack</span></div>
+              <div class="item"><span class="sw" style="background:var(--skipped)"></span><span class="small">skipped</span></div>
+            </div>
+
+          </div>
+        </div>
+
+        <div>
+          <div class="panel graph-area" id="graphPanel">
+            <svg class="svg-layer" id="svgLayer" width="100%" height="100%" viewBox="0 0 900 620" preserveAspectRatio="xMidYMid meet"></svg>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="apps" class="section" style="display:none">
+      <div class="panel">
+        <h2>Applications of DFS</h2>
+        <ul>
+          <li>Topological Sorting</li>
+          <li>Detect cycles in graphs</li>
+          <li>Path finding in mazes / puzzles</li>
+          <li>Connected components in networks</li>
+        </ul>
+        <div style="margin-top:12px"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/72/DFS_Example.svg/600px-DFS_Example.svg.png" alt="DFS image" style="max-width:100%;border-radius:8px"></div>
+      </div>
+    </div>
+
+  </main>
+
+  <script>
+    const GRAPH = {
+      1: [2,3],
+      2: [4,5],
+      3: [6,7],
+      4: [8,9],
+      5: [],
+      6: [],
+      7: [],
+      8: [],
+      9: [10],
+      10: []
+    };
+
+    const POS = {
+      1: {x:450,y:80},2:{x:300,y:170},3:{x:600,y:170},4:{x:210,y:270},5:{x:360,y:270},6:{x:520,y:270},7:{x:700,y:270},
+      8:{x:150,y:370},9:{x:260,y:370},10:{x:320,y:470}
+    };
+
+    let steps=[], stepIndex=0, timer=null;
+
+    function buildSteps(graph,start=1){
+      const s=[], visited=new Set(), stack=[start];
+      s.push({type:'init', stack: stack.slice()});
+
+      while(stack.length>0){
+        const stackBefore = stack.slice();
+        const node = stack.pop();
+        const stackAfter = stack.slice();
+        s.push({type:'pop', node, stackBefore:stackBefore.slice(), stackAfter:stackAfter.slice()});
+
+        if(!visited.has(node)){
+          const visitedBefore = Array.from(visited);
+          visited.add(node);
+          const visitedAfter = Array.from(visited);
+          s.push({type:'visit', node, visitedBefore, visitedAfter});
+
+          const neighbors = (graph[node]||[]).slice().reverse();
+          s.push({type:'adjacency', node, neighbors});
+
+          for(const neigh of neighbors){
+            const sBefore = stack.slice();
+            if(!visited.has(neigh) && !stack.includes(neigh)){
+              stack.push(neigh);
+              const sAfter = stack.slice();
+              s.push({type:'push', from: node, neighbor: neigh, stackBefore:sBefore.slice(), stackAfter:sAfter.slice()});
+            } else {
+              const sAfter = stack.slice();
+              const reason = visited.has(neigh)?'visited':'in-stack';
+              s.push({type:'skip', from:node, neighbor:neigh, reason, stackBefore:sBefore.slice(), stackAfter:sAfter.slice()});
+            }
+          }
+        }
+      }
+      s.push({type:'end'});
+      return s;
+    }
+
+    function initGraph(){
+      const svg = document.getElementById('svgLayer'); svg.innerHTML='';
+      for(const u in GRAPH){
+        (GRAPH[u]||[]).forEach(v=>{
+          const line = document.createElementNS('http://www.w3.org/2000/svg','line');
+          line.setAttribute('x1', POS[u].x); line.setAttribute('y1', POS[u].y);
+          line.setAttribute('x2', POS[v].x); line.setAttribute('y2', POS[v].y);
+          line.setAttribute('stroke','#bbd5ff'); line.setAttribute('stroke-width','3');
+          svg.appendChild(line);
+        });
+      }
+      const graphPanel=document.getElementById('graphPanel');
+      Array.from(graphPanel.querySelectorAll('.node')).forEach(n=>n.remove());
+      for(const id in POS){
+        const el=document.createElement('div'); el.className='node'; el.id='node'+id;
+        el.style.left=POS[id].x+'px'; el.style.top=POS[id].y+'px'; el.innerText=id;
+        graphPanel.appendChild(el);
+      }
+    }
+
+    function reconstructState(idx){
+      let visited=new Set(), stack=[], current=null;
+      for(let i=0;i<=idx && i<steps.length;i++){
+        const s=steps[i]; if(!s) continue;
+        switch(s.type){
+          case 'init': stack=s.stack.slice(); break;
+          case 'pop': current=s.node; stack=s.stackAfter.slice(); break;
+          case 'visit': visited=new Set(s.visitedAfter); current=s.node; break;
+          case 'adjacency': current=s.node; break;
+          case 'push': stack=s.stackAfter.slice(); current=s.from; break;
+          case 'skip': stack=s.stackAfter.slice(); current=s.from; break;
+          case 'end': break;
+        }
+      }
+      return {stack:Array.from(stack), visited:Array.from(visited), current};
+    }
+
+    function lookAheadForNode(node, idx){
+      const willPush=[], skipped=[];
+      for(let i=idx;i<steps.length;i++){
+        const s=steps[i]; if(!s) continue;
+        if((s.type==='push' || s.type==='skip') && s.from===node){
+          if(s.type==='push') willPush.push(s.neighbor); else skipped.push({neighbor:s.neighbor, reason:s.reason});
+        }
+        if(s.type==='pop' && s.node!==node) break;
+      }
+      return {willPush, skipped};
+    }
+
+    function renderStep(idx){
+      const last=steps.length-1;
+      if(idx<0) idx=0;
+      if(idx>last) idx=last;
+      stepIndex=idx;
+      document.getElementById('prevBtn').disabled=(idx===0);
+      document.getElementById('nextBtn').disabled=(idx>=last);
+      ['line1','line2','line3','line4','line5','line6','line7','line8'].forEach(id=>document.getElementById(id).classList.remove('highlight'));
+      const s=steps[idx], state=reconstructState(idx);
+      document.getElementById('line2').classList.add('highlight');
+
+      for(const id in POS){
+        const el=document.getElementById('node'+id);
+        el.classList.remove('visited','current','stacked','skipped');
+      }
+      state.visited.forEach(v=>{ const el=document.getElementById('node'+v); if(el) el.classList.add('visited'); });
+      state.stack.forEach(x=>{ const el=document.getElementById('node'+x); if(el && !state.visited.includes(x)) el.classList.add('stacked'); });
+      if(state.current){ const curEl=document.getElementById('node'+state.current); if(curEl) curEl.classList.add('current'); }
+
+      const stackDiv=document.getElementById('stackDisplay'); stackDiv.innerHTML='';
+      state.stack.slice().reverse().forEach(x=>{ const el=document.createElement('div'); el.className='queue-item'; el.innerText=x; if(state.current===x) el.style.fontWeight='700'; stackDiv.appendChild(el); });
+
+      document.getElementById('visitedDisplay').innerText='['+state.visited.join(', ')+']';
+      const adjDiv=document.getElementById('adjDisplay'); adjDiv.innerHTML='';
+      let currentNode=state.current||(s&&(s.node||s.from));
+      if(currentNode){
+        const neighbors=(GRAPH[currentNode]||[]).slice().reverse();
+        const ahead=lookAheadForNode(currentNode, idx+1);
+        neighbors.forEach(n=>{
+          const e=document.createElement('div'); e.className='adj-item'; e.innerText=n;
+          if(state.visited.includes(n)) { e.classList.add('small'); e.title='already visited'; e.style.opacity=0.7; }
+          if(ahead.willPush.includes(n)) { e.style.border='2px solid #2b66d6'; e.style.background='#eef6ff'; e.title='will be pushed'; }
+          const skipObj=ahead.skipped.find(x=>x.neighbor===n);
+          if(skipObj){ e.style.opacity=0.6; e.title='skipped: '+skipObj.reason; }
+          adjDiv.appendChild(e);
+        });
+      } else { adjDiv.innerHTML='<div class="small">No current node</div>'; }
+
+      if(s){
+        switch(s.type){
+          case 'init': document.getElementById('line1').classList.add('highlight'); break;
+          case 'pop': document.getElementById('line3').classList.add('highlight'); break;
+          case 'visit': document.getElementById('line5').classList.add('highlight'); break;
+          case 'adjacency': document.getElementById('line6').classList.add('highlight'); break;
+          case 'push': document.getElementById('line7').classList.add('highlight'); document.getElementById('line8').classList.add('highlight'); break;
+          case 'skip': document.getElementById('line7').classList.add('highlight'); break;
+          case 'end': document.getElementById('line2').classList.remove('highlight'); document.getElementById('line1').classList.add('highlight'); break;
+        }
+      }
+    }
+
+    function nextStep(){ if(stepIndex<steps.length-1){ renderStep(stepIndex+1); } else { pause(); } }
+    function prevStep(){ if(stepIndex>0) renderStep(stepIndex-1); }
+    function resetAll(){ pause(); renderStep(0); }
+    function play(){ document.getElementById('playBtn').disabled=true; document.getElementById('pauseBtn').disabled=false; const speed=parseInt(document.getElementById('speedRange').value,10); timer=setInterval(()=>{ if(stepIndex<steps.length-1){ nextStep(); } else { pause(); } }, speed); }
+    function pause(){ document.getElementById('playBtn').disabled=false; document.getElementById('pauseBtn').disabled=true; if(timer){ clearInterval(timer); timer=null; } }
+    function showSection(id){ document.querySelectorAll('.section').forEach(el=>el.style.display='none'); document.getElementById(id).style.display='block'; if(id==='visual'){ initGraph(); steps=buildSteps(GRAPH,1); renderStep(0); } }
+    document.addEventListener('DOMContentLoaded',()=>{ showSection('about'); });
+    window.nextStep=nextStep; window.prevStep=prevStep; window.play=play; window.pause=pause; window.resetAll=resetAll; window.showSection=showSection;
+  </script>
+</body>
+</html>
