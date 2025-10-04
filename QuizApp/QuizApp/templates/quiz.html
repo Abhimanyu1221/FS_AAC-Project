@@ -1,0 +1,26 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="quiz-container">
+    <div class="quiz-header">
+        <h1>{{ topic.topic_name }} Quiz</h1>
+        <p id="progress-text">Question 1 of {{ num_questions }}</p>
+    </div>
+
+    <div id="question-area">
+        <h2 id="question-text"></h2>
+        <div id="options-area">
+            </div>
+    </div>
+
+    <button id="next-btn" class="btn btn-primary">Next Question</button>
+</div>
+
+<script>
+    // The |tojson filter safely converts the Python list from app.py
+    // into a JavaScript array of objects that quiz.js can use.
+    const questions = {{ questions | tojson }};
+</script>
+
+<script src="{{ url_for('static', filename='js/quiz.js') }}"></script>
+{% endblock %}

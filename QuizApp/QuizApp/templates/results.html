@@ -1,0 +1,29 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="results-container">
+    <h1>Your Quiz History</h1>
+    {% if attempts %}
+        <table class="results-table">
+            <thead>
+                <tr>
+                    <th>Quiz Topic</th>
+                    <th>Score</th>
+                    <th>Date Taken</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for attempt in attempts %}
+                <tr>
+                    <td>{{ attempt.topic_name }}</td>
+                    <td>{{ attempt.score }} / {{ attempt.total_questions }}</td>
+                    <td>{{ attempt.attempted_on.strftime('%B %d, %Y') }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>You haven't completed any quizzes yet. Go to the dashboard to start one!</p>
+    {% endif %}
+</div>
+{% endblock %}

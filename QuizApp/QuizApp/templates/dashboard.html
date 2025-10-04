@@ -1,0 +1,64 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="dashboard-container">
+    <div class="dashboard-main">
+        <div class="dashboard-header">
+            <h1>Welcome, {{ session.username }}!</h1>
+            <p>Select a topic below to start a quiz.</p>
+        </div>
+
+        <div class="banner-space">
+            <p>Banner / Image Space</p>
+        </div>
+
+        <div class="quiz-list-section">
+            <h2>Available Quizzes</h2>
+            <div class="topic-list">
+                {% for topic in topics %}
+                <a href="{{ url_for('quiz', topic_id=topic.topic_id) }}" class="topic-card">
+                    <h3>{{ topic.topic_name }}</h3>
+                    <p>{{ topic.topic_description or 'Test your knowledge on this topic.' }}</p>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <div class="dashboard-sidebar">
+        <div class="progress-section">
+            <h3>Your Overall Progress</h3>
+            <div class="progress-container" data-progress="{{ progress }}">
+                <svg class="progress-ring" width="120" height="120">
+                   <circle class="progress-ring-track" cx="60" cy="60" r="54" />
+                   <circle class="progress-ring-indicator" cx="60" cy="60" r="54" />
+                </svg>
+                <span class="progress-text">0%</span>
+            </div>
+        </div>
+        </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const container = document.querySelector('.progress-container');
+    const progressRing = container.querySelector('.progress-ring-indicator');
+    const progressText = container.querySelector('.progress-text');
+    const radius = progressRing.r.baseVal.value;
+    const circumference = 2 * Math.PI * radius;
+
+    // Reads the progress value passed from Flask
+    const progress = container.dataset.progress || 0;
+
+    progressRing.style.strokeDasharray = `${circumference} ${circumference}`;
+    progressRing.style.strokeDashoffset = circumference;
+
+    // Calculates the correct offset to show the progress
+    const offset = circumference - (progress / 100) * circumference;
+    progressRing.style.strokeDashoffset = offset;
+
+    // Updates the percentage text in the middle
+    progressText.textContent = `${progress}%`;
+});
+</script>
+{% endblock %}
